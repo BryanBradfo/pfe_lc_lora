@@ -1,0 +1,4 @@
+pip==23.2.1
+numpy==1.23.1
+pickleshare==0.7.5
+torch==2.0.1
