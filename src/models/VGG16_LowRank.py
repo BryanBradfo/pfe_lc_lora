@@ -70,7 +70,7 @@ class VGG16_LowRank(nn.Module):
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=2, stride=2))
 
-        self.classifier = nn.Sequential(LowRankLinear(2048, 4096, weights[0], bias[0], rank = rank),
+        self.classifier = nn.Sequential(LowRankLinear(512, 4096, weights[0], bias[0], rank = rank),
                                         nn.ReLU(inplace=True),
                                         nn.Dropout(0.5),
                                         LowRankLinear(4096, 4096, weights[1], bias[1], rank = rank),
