@@ -118,7 +118,6 @@ def extract_weights(sd):
     bias = {}
     for layer_name, weight in sd.items():
         if 'bias' in layer_name:
-            bias[layer_name] = weight
             continue
         
         elif "classifier" in layer_name:
@@ -327,6 +326,14 @@ def save_checkpoint(saveloc, checkpoint_weights, checkpoint_bias, epch, checkpoi
     with open(fp, 'wb') as f:
         pickle.dump((checkpoint_weights, checkpoint_bias), f)
 
+    fp_weights = os.path.join(fp, "weights")
+    with open(fp_weights, 'wb') as f:
+        pickle.dump(checkpoint_weights, f)
+
+    fp_bias = os.path.join(fp, "bias")
+    with open(fp_bias, 'wb') as f:
+        pickle.dump(checkpoint_bias, f)
+        
 def load_checkpoint(filepath):
     """
     @param full_path : The full_path of the checkpoint to be reloaded from.
@@ -453,7 +460,7 @@ def load_checkpoint(filepath):
 #     return compressed_data, new_δt
 
 
-def compress_data(δt, num_bits=3, threshold=True):
+def compress_data(δt, num_bits=2, threshold=True):
     """
     @param δt : The delta to compress.
     @param num_bits : The number of bits to limit the huffman encoded variables to.
@@ -461,16 +468,19 @@ def compress_data(δt, num_bits=3, threshold=True):
 
     @return : Zlib compressed promoted delta and uncompressed version.
     """
+    print("length of δt: ", len(δt))
     # Promote the most significant changes (deltas) based on their magnitude and sign.
     _, δt_exp = np.frexp(δt)  # Extract the exponent of δt, ignoring mantissa.
     δt_sign = np.sign(δt)  # Get the sign of δt.
     # Convert sign information to binary (0 for positive, 1 for negative).
     δt_sign[δt_sign > 0] = 0
     δt_sign[δt_sign < 0] = 1
+
     # Group deltas by their exponent and sign.
     mp = defaultdict(list)
     for i in range(len(δt)):
         mp[(δt_exp[i], δt_sign[i])].append(δt[i])
+
     # Average the deltas within each group.
     for k in mp:
         # mp[k] = np.mean(mp[k])
