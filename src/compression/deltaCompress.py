@@ -9,11 +9,21 @@ def generate_decomposed_names(original_layers):
     @return New decomposed layers name with respect to the decomposition of the model.
         <original>.weight will be returned as <original>.beta and <original>.alpha.
     """
+
+    # Generate decomposed layer names.
     decomposed_layers = []
+
+    # Iterate over the original layers and generate decomposed layer names.
     for dcl in original_layers:
+        # Generate new name.
         newname = ".".join(dcl.split(".")[:-1])
+
+        # Append to the decomposed layers.
         decomposed_layers.append(newname + ".alpha")
+
+        # Append to the decomposed layers.
         decomposed_layers.append(newname + ".beta")
+        
     return decomposed_layers
 
 def compress_data(δt, num_bits = 3, threshhold=True):
