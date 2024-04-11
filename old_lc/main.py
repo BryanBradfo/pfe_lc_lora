@@ -108,12 +108,20 @@ def read_decompressed_state_dict(filepath):
     with open(filepath, 'rb') as f:
             return pickle.load(f)
         
-def extract_weights(sd):
+def extract_weights(sd, saveloc):
     """
     @param sd : Initial state_dict of the model.
 
     @return The base for all delta calculations.
     """
+    # print(saveloc)
+
+    if not os.path.exists(saveloc):
+        os.makedirs(saveloc)
+    # fp = os.path.join(saveloc, "/initial_model.pt")
+    print("old_lc | saving full base model @ {}".format(saveloc + "/initial_model.pt"))
+    torch.save(sd, saveloc + "/initial_model.pt")
+
     weights = []
     bias = {}
     for layer_name, weight in sd.items():
@@ -308,7 +316,7 @@ def generate_delta(weight_prev, sd_curr):
     
 #     # return np.array(compressed_delta)
 
-def save_checkpoint(saveloc, checkpoint_weights, checkpoint_bias, epch, checkpoint_id):
+def save_checkpoint(saveloc, checkpoint_weights, checkpoint_bias, checkpoint_id):
     """
     @param saveloc : Save location for the checkpoint.
     @param checkpoint_weights : The checkpoint weights.
@@ -320,20 +328,22 @@ def save_checkpoint(saveloc, checkpoint_weights, checkpoint_bias, epch, checkpoi
     """
     if not os.path.exists(saveloc):
         os.makedirs(saveloc)
-    checkpoint_name = "old_lc_checkpoint_{}_{}.pt".format(epch, checkpoint_id)
+    checkpoint_name = "old_lc_checkpoint_{}.pt".format(checkpoint_id)
     print("Saving Checkpoint: {} @ {}".format(checkpoint_name, saveloc))
     fp = os.path.join(saveloc, checkpoint_name)
     with open(fp, 'wb') as f:
         pickle.dump((checkpoint_weights, checkpoint_bias), f)
 
-    fp_weights = os.path.join(fp, "weights")
-    with open(fp_weights, 'wb') as f:
-        pickle.dump(checkpoint_weights, f)
+    # checkpoint_name_weight = "old_lc_checkpoint_weight_{}_{}.pt".format(epch, checkpoint_id)
+    # fp_weights = os.path.join(saveloc, checkpoint_name_weight)
+    # with open(fp_weights, 'wb') as f:
+    #     pickle.dump(checkpoint_weights, f)
 
-    fp_bias = os.path.join(fp, "bias")
-    with open(fp_bias, 'wb') as f:
-        pickle.dump(checkpoint_bias, f)
-        
+    # checkpoint_name_bias = "old_lc_checkpoint_bias_{}_{}.pt".format(epch, checkpoint_id)
+    # fp_bias = os.path.join(saveloc, checkpoint_name_bias)
+    # with open(fp_bias, 'wb') as f:
+    #     pickle.dump(checkpoint_bias, f)
+
 def load_checkpoint(filepath):
     """
     @param full_path : The full_path of the checkpoint to be reloaded from.
@@ -460,45 +470,90 @@ def load_checkpoint(filepath):
 #     return compressed_data, new_δt
 
 
-def compress_data(δt, num_bits=2, threshold=True):
+# def compress_data(δt, num_bits=2, threshold=True):
+#     """
+#     @param δt : The delta to compress.
+#     @param num_bits : The number of bits to limit the huffman encoded variables to.
+#     @param threshold : Enabler for priority promotion process.
+
+#     @return : Zlib compressed promoted delta and uncompressed version.
+#     """
+#     print("length of δt: ", len(δt))
+#     # Promote the most significant changes (deltas) based on their magnitude and sign.
+#     _, δt_exp = np.frexp(δt)  # Extract the exponent of δt, ignoring mantissa.
+#     δt_sign = np.sign(δt)  # Get the sign of δt.
+#     # Convert sign information to binary (0 for positive, 1 for negative).
+#     δt_sign[δt_sign > 0] = 0
+#     δt_sign[δt_sign < 0] = 1
+
+#     # Group deltas by their exponent and sign.
+#     mp = defaultdict(list)
+#     for i in range(len(δt)):
+#         mp[(δt_exp[i], δt_sign[i])].append(δt[i])
+
+#     # Average the deltas within each group.
+#     for k in mp:
+#         # mp[k] = np.mean(mp[k])
+#         mp[k] = np.mean([max(mp[k]), min(mp[k])])
+
+#     # If threshold is enabled, select the most significant changes.
+#     if threshold:
+#         allowed_buckets = int(math.pow(2, num_bits) - 1)
+#         # Sort groups by their absolute mean value and select top significant groups.
+#         significant_deltas = sorted(mp.items(), key=lambda x: abs(x[1]), reverse=True)[:allowed_buckets]
+#         mp = {k: v for k, v in significant_deltas}
+#     # Apply the averaged value to all elements in each group.
+#     promoted_δt = np.array([mp.get((exp, sign), 0) for exp, sign in zip(δt_exp, δt_sign)], dtype=np.float32)
+
+#     # Zlib compression of the promoted delta.
+#     compressed_promoted_δt = zlib.compress(promoted_δt)
+
+#     return compressed_promoted_δt, promoted_δt
+
+def compress_data(δt, num_bits = 3, threshhold=True):
     """
     @param δt : The delta to compress.
-    @param num_bits : The number of bits to limit the huffman encoded variables to.
-    @param threshold : Enabler for priority promotion process.
+    @param num_bits : The number of bits to limit huffman encoded variables to.
+    @param treshold : Enabler for priority promotion process.
 
-    @return : Zlib compressed promoted delta and uncompressed version.
+    @return Zlib compressed promoted delta and uncompressed version.
     """
-    print("length of δt: ", len(δt))
-    # Promote the most significant changes (deltas) based on their magnitude and sign.
-    _, δt_exp = np.frexp(δt)  # Extract the exponent of δt, ignoring mantissa.
-    δt_sign = np.sign(δt)  # Get the sign of δt.
-    # Convert sign information to binary (0 for positive, 1 for negative).
+    _, δt_exp = np.frexp(δt)
+    δt_sign = np.sign(δt)
     δt_sign[δt_sign > 0] = 0
-    δt_sign[δt_sign < 0] = 1
-
-    # Group deltas by their exponent and sign.
-    mp = defaultdict(list)
+    δt_sign[δt_sign < 0] = 1    
+    mp =  defaultdict(list)
     for i in range(len(δt)):
-        mp[(δt_exp[i], δt_sign[i])].append(δt[i])
-
-    # Average the deltas within each group.
+        mp[(δt_exp[i], δt_sign[i])].append((i, δt[i]))
     for k in mp:
-        # mp[k] = np.mean(mp[k])
-        mp[k] = np.mean([max(mp[k]), min(mp[k])])
-
-    # If threshold is enabled, select the most significant changes.
-    if threshold:
-        allowed_buckets = int(math.pow(2, num_bits) - 1)
-        # Sort groups by their absolute mean value and select top significant groups.
-        significant_deltas = sorted(mp.items(), key=lambda x: abs(x[1]), reverse=True)[:allowed_buckets]
-        mp = {k: v for k, v in significant_deltas}
-    # Apply the averaged value to all elements in each group.
-    promoted_δt = np.array([mp.get((exp, sign), 0) for exp, sign in zip(δt_exp, δt_sign)], dtype=np.float32)
-
-    # Zlib compression of the promoted delta.
-    compressed_promoted_δt = zlib.compress(promoted_δt, level=9)
-
-    return compressed_promoted_δt, promoted_δt
+        mp[k] = (np.average(np.array([x[-1] for x in mp[k]])), 
+                 [x[0] for x in mp[k]])
+    mp = list(mp.values())
+    # print("len(mp):", len(mp))
+    if threshhold:
+        allowed_buckets = int(math.pow(2, num_bits)-1)
+        # print("allowed_buckets:", allowed_buckets)
+        # print("min between len(mp) and allowed_buckets:", min(allowed_buckets, len(mp)))
+        mp = sorted(mp, key = lambda x : abs(x[0]), reverse = True)[:min(allowed_buckets, len(mp))]
+        # print("len(mp):", len(mp))
+    new_δt= [0 for x in range(len(δt))]
+    for qtVal, pos in mp:
+        for p in pos:
+            new_δt[p] = qtVal
+    new_δt = np.array(new_δt, dtype = np.float32)
+    # Compress the data
+    compressed_data = zlib.compress(new_δt)
+    # Get the size of the original data
+    original_size = len(new_δt)
+    # Get the size of the compressed data
+    compressed_size = len(compressed_data)
+    # Calculate the compression ratio
+    compression_ratio = original_size / compressed_size
+    print("from old_lc")
+    print("Original size:", original_size, "bytes")
+    print("Compressed size:", compressed_size, "bytes")
+    print("Compression ratio:", compression_ratio)
+    return zlib.compress(new_δt), new_δt
 
 # def compress_data(δt, num_bits=10, threshold=True):
 #     """

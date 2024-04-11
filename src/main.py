@@ -15,6 +15,7 @@ def compress_delta(weight_delta, decomposed_delta):
     @return Quantized deltas as well as new deltas to replace the initial base.
     """
     compressed_weight_delta, full_delta = compress.compress_data(weight_delta, num_bits = 3)
+    print("src > for decomposed delta now....")
     compressed_decomposed_delta, decomp_full_delta = compress.compress_data(decomposed_delta, num_bits = 3)
     return compressed_weight_delta, full_delta, compressed_decomposed_delta, decomp_full_delta
 
