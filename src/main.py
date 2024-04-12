@@ -15,7 +15,7 @@ def compress_delta(weight_delta, decomposed_delta):
     @return Quantized deltas as well as new deltas to replace the initial base.
     """
     compressed_weight_delta, full_delta = compress.compress_data(weight_delta, num_bits = 3)
-    print("src > for decomposed delta now....")
+    # print("src > for decomposed delta now....")
     compressed_decomposed_delta, decomp_full_delta = compress.compress_data(decomposed_delta, num_bits = 3)
     return compressed_weight_delta, full_delta, compressed_decomposed_delta, decomp_full_delta
 
@@ -167,6 +167,8 @@ def generate_delta(weights_prev : np.array, decomposed_weights_prev : np.array, 
             weights_curr.append(sd_curr[k])
         
     # Generate weight delta.
+    # print("decomposed_layers=", decomposed_layers)
+    # print("full:",full)
 
     # Flatten the weights and decomposed weights.
     curr_flatten = np.concatenate([tensor.numpy().flatten() for tensor in weights_curr])
@@ -194,6 +196,14 @@ def save_checkpoint(checkpoint_weights, decomposed_weights, checkpoint_bias, che
     print("Saving Checkpoint: {} @ {}".format(checkpoint_name, saveloc))
     fp = os.path.join(saveloc, checkpoint_name)
     with open(fp, "wb") as f:
+        # print("from src")
+        # print("Original size in kilo octets:", len(checkpoint_weights) / 1024)
+        # print("Decomposed size in kilo octets:", len(decomposed_weights) / 1024)
+        # print("Bias size in kilo octets:", len(checkpoint_bias) / 1024)
+        # print("Total size in kilo octets:", (len(checkpoint_weights) + len(decomposed_weights) + len(checkpoint_bias)) / 1024)
+        # print("Checkpoint weights", checkpoint_weights)
+        # print("Decomposed weights", decomposed_weights)
+        # print("Checkpoint bias", checkpoint_bias.keys())
         pickle.dump((checkpoint_weights, decomposed_weights, checkpoint_bias), f)
     
 def load_checkpoint(full_path):

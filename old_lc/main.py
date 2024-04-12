@@ -38,6 +38,9 @@ import old_lc.compression.compress as compress
 import numpy as np
 from collections import defaultdict
 import zlib, math
+import sys
+import os
+import pickle
 
 def compress_set(filename : str, saveloc : str):
     """
@@ -195,7 +198,7 @@ def load_compressed_set(filepath : str, saveloc : str, original_weight_dict : di
 
 ############################################################################################################
 
-def generate_delta(weight_prev, sd_curr):
+def generate_delta(weight_prev, sd_curr, decomposed_layers):
     """
     @param base : The base for all delta calculations.
     @param curr : The current state of the model.
@@ -212,9 +215,12 @@ def generate_delta(weight_prev, sd_curr):
         if "bias" in k:
             full[k] = sd_curr[k]
             continue
+        
+        if k in decomposed_layers:
+            continue
 
         # if layer classifier, add it to the full dictionary
-        if "classifier" in k:
+        elif "classifier" in k:
             full[k] = sd_curr[k]
             continue
 
@@ -316,33 +322,160 @@ def generate_delta(weight_prev, sd_curr):
     
 #     # return np.array(compressed_delta)
 
+# def save_checkpoint(saveloc, checkpoint_weights, checkpoint_bias, checkpoint_id):
+#     """
+#     @param saveloc : Save location for the checkpoint.
+#     @param checkpoint_weights : The checkpoint weights.
+#     @param checkpoint_bias : The checkpoint bias.
+#     @param epch : The epoch of the checkpoint.
+#     @param checkpoint_id : The checkpoint id.
+
+#     Saves the checkpoint.
+#     """
+#     if not os.path.exists(saveloc):
+#         os.makedirs(saveloc)
+#     checkpoint_name = "old_lc_checkpoint_{}.pt".format(checkpoint_id)
+#     print("Saving Checkpoint: {} @ {}".format(checkpoint_name, saveloc))
+#     fp = os.path.join(saveloc, checkpoint_name)
+#     with open(fp, 'wb') as f:
+#         print("from old_lc")
+#         print("Weight size in kilo octets:", len(checkpoint_weights) / 1024)
+#         print("Bias size in kilo octets:", len(checkpoint_bias) / 1024)
+#         print("Total size in kilo octets:", (len(checkpoint_weights) + len(checkpoint_bias)) / 1024)
+#         # print("Checkpoint weights", checkpoint_weights)
+#         # print("Checkpoint bias", checkpoint_bias)
+#         pickle.dump((checkpoint_weights, checkpoint_bias), f)
+
+#     # checkpoint_name_weight = "old_lc_checkpoint_weight_{}_{}.pt".format(epch, checkpoint_id)
+#     # fp_weights = os.path.join(saveloc, checkpoint_name_weight)
+#     # with open(fp_weights, 'wb') as f:
+#     #     pickle.dump(checkpoint_weights, f)
+
+#     # checkpoint_name_bias = "old_lc_checkpoint_bias_{}_{}.pt".format(epch, checkpoint_id)
+#     # fp_bias = os.path.join(saveloc, checkpoint_name_bias)
+#     # with open(fp_bias, 'wb') as f:
+#     #     pickle.dump(checkpoint_bias, f)
+
+
+
+import os
+import pickle
+import sys
+
 def save_checkpoint(saveloc, checkpoint_weights, checkpoint_bias, checkpoint_id):
     """
+    Saves the checkpoint.
+
     @param saveloc : Save location for the checkpoint.
     @param checkpoint_weights : The checkpoint weights.
     @param checkpoint_bias : The checkpoint bias.
-    @param epch : The epoch of the checkpoint.
     @param checkpoint_id : The checkpoint id.
-
-    Saves the checkpoint.
     """
+
     if not os.path.exists(saveloc):
         os.makedirs(saveloc)
+
     checkpoint_name = "old_lc_checkpoint_{}.pt".format(checkpoint_id)
     print("Saving Checkpoint: {} @ {}".format(checkpoint_name, saveloc))
     fp = os.path.join(saveloc, checkpoint_name)
+
+    # Calculate sizes before serialization
+    # weights_size = sys.getsizeof(checkpoint_weights)
+    # bias_size = sys.getsizeof(checkpoint_bias)
+    # total_size = (weights_size + bias_size) / 1024
+
+    # print("from old_lc")
+    # print("Weight size in kilo octets:", weights_size / 1024)
+    # print("Bias size in kilo octets:", bias_size / 1024)
+    # print("Total size in kilo octets before serialization:", total_size)
+
+    # print("Checkpoint bias:",checkpoint_bias.keys())
+    # print("Checkpoint weights:",checkpoint_weights)
+
     with open(fp, 'wb') as f:
         pickle.dump((checkpoint_weights, checkpoint_bias), f)
 
-    # checkpoint_name_weight = "old_lc_checkpoint_weight_{}_{}.pt".format(epch, checkpoint_id)
-    # fp_weights = os.path.join(saveloc, checkpoint_name_weight)
-    # with open(fp_weights, 'wb') as f:
-    #     pickle.dump(checkpoint_weights, f)
+    # Get size of the serialized file
+    # file_size = os.path.getsize(fp) / 1024
+    # print(f"Size of serialized file: {file_size} kilo octets")
 
-    # checkpoint_name_bias = "old_lc_checkpoint_bias_{}_{}.pt".format(epch, checkpoint_id)
-    # fp_bias = os.path.join(saveloc, checkpoint_name_bias)
-    # with open(fp_bias, 'wb') as f:
-    #     pickle.dump(checkpoint_bias, f)
+
+
+
+
+
+
+# import pickletools
+
+# def total_size(o, handlers={}):
+#     """ Calculate the total memory footprint of an object including the content of containers. """
+#     from types import ModuleType, FunctionType
+#     from gc import get_referents
+
+#     # Custom objects know their class.
+#     # Function objects seem to know way too much, including modules.
+#     # Exclude modules as well.
+#     blacklist = type, ModuleType, FunctionType
+
+#     if isinstance(o, blacklist):
+#         # Basic type or not an object we want to deal with.
+#         raise TypeError("getsize() does not take argument of type: " + str(type(o)))
+#     seen = set()
+#     default_size = sys.getsizeof(0)  # Default size of zero, used for base case.
+
+#     def inner(obj):
+#         if id(obj) in seen:
+#             # If the object has already been processed, do not process it again
+#             return 0
+#         seen.add(id(obj))
+#         size = sys.getsizeof(obj, default_size)
+
+#         if isinstance(obj, (str, bytes, bytearray)):
+#             return size
+
+#         if isinstance(obj, dict):
+#             size += sum(inner(k) + inner(v) for k, v in obj.items())
+
+#         elif hasattr(obj, '__dict__'):
+#             size += inner(vars(obj))
+
+#         elif hasattr(obj, '__iter__') and not isinstance(obj, (str, bytes, bytearray)):
+#             size += sum(inner(i) for i in obj)
+
+#         return size
+
+#     return inner(o)
+
+# def save_checkpoint(saveloc, checkpoint_weights, checkpoint_bias, checkpoint_id):
+#     """
+#     @param saveloc : Save location for the checkpoint.
+#     @param checkpoint_weights : The checkpoint weights.
+#     @param checkpoint_bias : The checkpoint bias.
+#     @param checkpoint_id : The checkpoint id.
+
+#     Saves the checkpoint.
+#     """
+#     if not os.path.exists(saveloc):
+#         os.makedirs(saveloc)
+#     checkpoint_name = "old_lc_checkpoint_{}.pt".format(checkpoint_id)
+#     print("Saving Checkpoint: {} @ {}".format(checkpoint_name, saveloc))
+#     fp = os.path.join(saveloc, checkpoint_name)
+#     with open(fp, 'w+') as f:
+#         print("from old_lc")
+#         data = f.read()
+#         pickletools.dis(data)
+#         # print("Weight size in kilo octets:", total_size(checkpoint_weights) / 1024)
+#         # print("Bias size in kilo octets:", total_size(checkpoint_bias) / 1024)
+#         # total = total_size(checkpoint_weights) + total_size(checkpoint_bias)
+#         # print("Total size in kilo octets:", total / 1024)
+#         pickle.dump((checkpoint_weights, checkpoint_bias), f)
+
+#     file_size_in_kb = os.path.getsize(fp) / 1024
+#     # print(f"Total size in kilo octets (after pickle): {file_size_in_kb:.2f} Ko")
+
+# You would call save_checkpoint with the required parameters like this:
+# save_checkpoint('/path/to/save', weights, biases, checkpoint_id)
+
 
 def load_checkpoint(filepath):
     """
@@ -541,18 +674,18 @@ def compress_data(δt, num_bits = 3, threshhold=True):
         for p in pos:
             new_δt[p] = qtVal
     new_δt = np.array(new_δt, dtype = np.float32)
-    # Compress the data
-    compressed_data = zlib.compress(new_δt)
-    # Get the size of the original data
-    original_size = len(new_δt)
-    # Get the size of the compressed data
-    compressed_size = len(compressed_data)
-    # Calculate the compression ratio
-    compression_ratio = original_size / compressed_size
-    print("from old_lc")
-    print("Original size:", original_size, "bytes")
-    print("Compressed size:", compressed_size, "bytes")
-    print("Compression ratio:", compression_ratio)
+    # # Compress the data
+    # compressed_data = zlib.compress(new_δt)
+    # # Get the size of the original data
+    # original_size = len(new_δt)
+    # # Get the size of the compressed data
+    # compressed_size = len(compressed_data)
+    # # Calculate the compression ratio
+    # compression_ratio = original_size / compressed_size
+    # print("from old_lc")
+    # print("Original size:", original_size, "bytes")
+    # print("Compressed size:", compressed_size, "bytes")
+    # print("Compression ratio:", compression_ratio)
     return zlib.compress(new_δt), new_δt
 
 # def compress_data(δt, num_bits=10, threshold=True):
@@ -566,7 +699,7 @@ def compress_data(δt, num_bits = 3, threshhold=True):
 #     return compressed_weight_delta, full_delta
 
 
-def restore_state_dict(decoded_checkpoint, bias, base_dict):
+def restore_state_dict(decoded_checkpoint, bias, base_dict, decomposed_layers):
     """
     @param decoded_checkpoint: The decoded_checkpoint from zlib.
     @param bias : The bias dictionary of the model.
@@ -582,8 +715,11 @@ def restore_state_dict(decoded_checkpoint, bias, base_dict):
         dim = init_tensor.numpy().shape
         if not dim:
             continue
+        if layer_name in decomposed_layers:
+            continue
         elif "classifier" in layer_name:
             base_dict[layer_name] = bias[layer_name]
+            continue
         else:
             t_elements = np.prod(dim)
             needed_ele = decoded_checkpoint[last_idx : last_idx + t_elements]

@@ -65,8 +65,8 @@ def compress_data(δt, num_bits = 3, threshhold=True):
     compressed_size = len(compressed_data)
     # Calculate the compression ratio
     compression_ratio = original_size / compressed_size
-    print("from src")
-    print("Original size:", original_size, "bytes")
-    print("Compressed size:", compressed_size, "bytes")
-    print("Compression ratio:", compression_ratio)
+    # print("from src")
+    # print("Original size:", original_size, "bytes")
+    # print("Compressed size:", compressed_size, "bytes")
+    # print("Compression ratio:", compression_ratio)
     return zlib.compress(new_δt), new_δt
