@@ -1,3 +1,5 @@
 __pycache__
 data
+data_imagenet
 .DS_Store
+*.zip
