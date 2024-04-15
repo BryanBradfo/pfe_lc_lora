@@ -1,5 +1,6 @@
 __pycache__
 data
 data_imagenet
+data_CIFAR10
 .DS_Store
 *.zip
