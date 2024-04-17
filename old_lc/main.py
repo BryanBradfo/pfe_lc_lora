@@ -111,7 +111,7 @@ def read_decompressed_state_dict(filepath):
     with open(filepath, 'rb') as f:
             return pickle.load(f)
         
-def extract_weights(sd, saveloc):
+def extract_weights(sd, saveloc, decomposed_layers):
     """
     @param sd : Initial state_dict of the model.
 
@@ -130,9 +130,13 @@ def extract_weights(sd, saveloc):
     for layer_name, weight in sd.items():
         if 'bias' in layer_name:
             continue
+
+        # if layer_name in decomposed_layers:
+        #     weights.append(weight)
+        #     continue
         
-        elif "classifier" in layer_name:
-            continue
+        # elif "classifier" in layer_name:
+        #     continue
 
         else:
             weights.append(weight)
@@ -216,13 +220,14 @@ def generate_delta(weight_prev, sd_curr, decomposed_layers):
             full[k] = sd_curr[k]
             continue
         
-        if k in decomposed_layers:
-            continue
+        # if k in decomposed_layers:
+        #     weights_curr.append(sd_curr[k]) #TO COMMENT IF PROBLEM
+        #     continue
 
-        # if layer classifier, add it to the full dictionary
-        elif "classifier" in k:
-            full[k] = sd_curr[k]
-            continue
+        # # if layer classifier, add it to the full dictionary
+        # elif "classifier" in k:
+        #     full[k] = sd_curr[k]
+        #     continue
 
         # Otherwise, extract weights for prev and current layer
         else:
@@ -708,18 +713,23 @@ def restore_state_dict(decoded_checkpoint, bias, base_dict, decomposed_layers):
     @return Restored state_dict.
     """
     last_idx = 0
+    last_idx_dcomp = 0
     for layer_name, init_tensor in base_dict.items():
-        if "bias" in layer_name:
-            base_dict[layer_name] = bias[layer_name]
-            continue
         dim = init_tensor.numpy().shape
         if not dim:
             continue
-        if layer_name in decomposed_layers:
-            continue
-        elif "classifier" in layer_name:
+        if "bias" in layer_name:
             base_dict[layer_name] = bias[layer_name]
             continue
+        # if layer_name in decomposed_layers: #for the fully connected layers
+        #     # t_element_decomp = dim[0] * dim[1]
+        #     # needed_ele_decomp = decoded_checkpoint[last_idx_dcomp : last_idx_dcomp + t_element_decomp]
+        #     # last_idx_dcomp += t_element_decomp
+        #     # base_dict[layer_name] = torch.unflatten(torch.from_numpy(np.copy(needed_ele_decomp)), -1, dim)
+        #     continue
+        # elif "classifier" in layer_name:
+        #     base_dict[layer_name] = bias[layer_name]
+            # continue
         else:
             t_elements = np.prod(dim)
             needed_ele = decoded_checkpoint[last_idx : last_idx + t_elements]
