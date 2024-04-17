@@ -17,13 +17,25 @@ def getBase(model, basepath=""):
     w = [wd['classifier.1.weight'], wd['classifier.4.weight']]
     b = [wd['classifier.1.bias'], wd['classifier.4.bias']]
 
+    # w = [wd['classifier.1.weight'], wd['classifier.4.weight'], wd['classifier.6.weight']]
+    # b = [wd['classifier.1.bias'], wd['classifier.4.bias'], wd['classifier.6.bias']]
+
     # Save base weights.
     base_dict = {
         'classifier.1.weight' : wd['classifier.1.weight'],
         'classifier.1.bias' : wd['classifier.1.bias'],
         'classifier.4.weight' : wd['classifier.4.weight'],
-        'classifier.4.bias' : wd['classifier.4.bias']
+        'classifier.4.bias' : wd['classifier.4.bias'],
     }
+
+    # base_dict = {
+    #     'classifier.1.weight' : wd['classifier.1.weight'],
+    #     'classifier.1.bias' : wd['classifier.1.bias'],
+    #     'classifier.4.weight' : wd['classifier.4.weight'],
+    #     'classifier.4.bias' : wd['classifier.4.bias'],
+    #     'classifier.6.weight' : wd['classifier.6.weight'],
+    #     'classifier.6.bias' : wd['classifier.6.bias']
+    # }
     if basepath != "":
         if not os.path.exists(basepath):
             os.makedirs(basepath)
@@ -75,6 +87,7 @@ class AlexNet_LowRank(nn.Module):
             LowRankLinear(2048, 1024, weights[1], bias[1], rank = rank),
             nn.ReLU(inplace=True),
             nn.Linear(1024,num),
+            # LowRankLinear(1024, num, weights[2], bias[2], rank = rank),
         )
     
     def forward(self, x):
