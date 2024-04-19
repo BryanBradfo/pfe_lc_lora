@@ -111,6 +111,39 @@ def read_decompressed_state_dict(filepath):
     with open(filepath, 'rb') as f:
             return pickle.load(f)
         
+def extract_weights_gpu(sd, saveloc, decomposed_layers):
+    """
+    @param sd : Initial state_dict of the model.
+
+    @return The base for all delta calculations.
+    """
+    # print(saveloc)
+
+    if not os.path.exists(saveloc):
+        os.makedirs(saveloc)
+    # fp = os.path.join(saveloc, "/initial_model.pt")
+    print("old_lc | saving full base model @ {}".format(saveloc + "/initial_model.pt"))
+    torch.save(sd, saveloc + "/initial_model.pt")
+
+    weights = []
+    bias = {}
+    for layer_name, weight in sd.items():
+        if 'bias' in layer_name:
+            continue
+
+        # if layer_name in decomposed_layers:
+        #     weights.append(weight)
+        #     continue
+        
+        # elif "classifier" in layer_name:
+        #     continue
+
+        else:
+            weights.append(weight)
+    # return np.concatenate([tensor.flatten().numpy() for tensor in weights]), bias
+    return np.concatenate([tensor.cpu().detach().flatten().numpy() for tensor in weights])
+
+      
 def extract_weights(sd, saveloc, decomposed_layers):
     """
     @param sd : Initial state_dict of the model.
@@ -142,6 +175,7 @@ def extract_weights(sd, saveloc, decomposed_layers):
             weights.append(weight)
     # return np.concatenate([tensor.flatten().numpy() for tensor in weights]), bias
     return np.concatenate([tensor.flatten().numpy() for tensor in weights])
+
 
 def get_state_dict(filename : str) -> dict:
     """
@@ -201,6 +235,48 @@ def load_compressed_set(filepath : str, saveloc : str, original_weight_dict : di
 
 
 ############################################################################################################
+
+def generate_delta_gpu(weight_prev, sd_curr, decomposed_layers):
+    """
+    @param base : The base for all delta calculations.
+    @param curr : The current state of the model.
+
+    @return The delta between the base and the current model state.
+    """
+    weights_curr = []
+
+    full = {}
+
+    for k in sd_curr:
+
+        # If bias, skip
+        if "bias" in k:
+            full[k] = sd_curr[k]
+            continue
+        
+        # if k in decomposed_layers:
+        #     weights_curr.append(sd_curr[k]) #TO COMMENT IF PROBLEM
+        #     continue
+
+        # # if layer classifier, add it to the full dictionary
+        # elif "classifier" in k:
+        #     full[k] = sd_curr[k]
+        #     continue
+
+        # Otherwise, extract weights for prev and current layer
+        else:
+            weights_curr.append(sd_curr[k])
+
+
+    # Generate weight delta
+
+    curr_flatten = np.concatenate([tensor.cpu().detach().numpy().flatten() for tensor in weights_curr])
+
+    # Generate delta btw current and previous
+    weight_delta = np.subtract(curr_flatten, weight_prev)
+
+    return weight_delta, full
+
 
 def generate_delta(weight_prev, sd_curr, decomposed_layers):
     """
