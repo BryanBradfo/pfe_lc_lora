@@ -19,6 +19,70 @@ def compress_delta(weight_delta, decomposed_delta):
     compressed_decomposed_delta, decomp_full_delta = compress.compress_data(decomposed_delta, num_bits = 3)
     return compressed_weight_delta, full_delta, compressed_decomposed_delta, decomp_full_delta
 
+def extract_weights_gpu(initmodel, saveloc, decomposed_layers, restoring = False):
+    """
+    @param initmodel : Initial run of the model.
+    @param saveloc : The save location for the current model training process.
+    @param restoring : If it is currently being used for model restoration, 
+        which does not require another full-save
+    @param decomposed_layers : Names of the decomposed layers.
+    @return The base for all delta calculations.
+    """
+
+    # Extract weights from the model.
+    if not restoring:
+        wd = initmodel.state_dict()
+
+    # If we are restoring, this will already be a state dictionary.
+    else:
+        wd = initmodel 
+
+    # Extract weights from the model.
+    if not restoring:
+        # Save current model state_dict for restoration of weights.
+
+        # Create folder if it does not exist.
+        if not os.path.exists(saveloc):
+            os.makedirs(saveloc)
+
+        # Creation of the full path
+        fp = os.path.join(saveloc, "base_model.pt")
+        print("saving full base model @ {}".format(fp))
+
+        # Save the model.
+        torch.save(wd, fp)
+
+    # Generate base layer of weights (0-th state) for delta to build on.
+    decomposed_layers = compress.generate_decomposed_names(decomposed_layers)
+
+    # Creation of the weights and decomposed weights lists
+    weights, decomposed_weights = [], []
+
+    # Iterate through the state dictionary and extract the weights.
+    for k, v in wd.items():
+
+        # Skip bias layers.
+        if "bias" in k:
+            continue
+        # If the layer is decomposed, add it to the decomposed weights list.
+        if k in decomposed_layers:
+            decomposed_weights.append(v)
+            continue
+
+        # If the layer is the classifier, skip it.
+        elif "classifier" in k:
+            continue
+
+        # Otherwise, add it to the weights list.
+        else:
+            weights.append(v)
+
+    # Flatten the weights and decomposed weights.
+    weights = np.concatenate([tensor.cpu().detach().flatten().numpy() for tensor in weights])
+    decomposed_weights = np.concatenate([tensor.cpu().detach().flatten().numpy() for tensor in decomposed_weights])
+
+    return weights, decomposed_weights
+
 def extract_weights(initmodel, saveloc, decomposed_layers, restoring = False):
     """
     @param initmodel : Initial run of the model.
@@ -123,6 +187,65 @@ def full_snapshot(current_base, decomp_base, bias,
         wd[k] = v
     clean_model_lora.load_state_dict(wd)
     return clean_model_lora
+
+def generate_delta_gpu(weights_prev : np.array, decomposed_weights_prev : np.array, sd_curr, decomposed_layers):
+    """
+    @param weights_prev : The previous weights of non-decomposed layers.
+    @param decomposed_weights_prev : The previous weights of decomposed layers.
+    @param sd_curr : The state dictionary of the current weights.
+    @param decomposed_layers : layers that have undergone decomposition.
+
+    @return The delta for the weights of the normal and decomposed layers.
+    Also returns the full dictionary, which holds the bias.
+    """
+
+    # Create lists to store the weights and decomposed weights.
+    weights_curr, decomposed_weights_curr = [], []
+
+    # New decomposed layers name w/ respect to the decomposition of the model <original>.weight -> <original>_alpha.weight, <original>_beta.weight
+    decomposed_layers = compress.generate_decomposed_names(decomposed_layers)
+
+    # Store layers that require full save (bias layers)
+    full = {} 
+
+    # Iterate through the current state dictionary and extract the weights.
+    for k in sd_curr:
+
+        # Skip bias layers.
+        if "bias" in k:
+            full[k] = sd_curr[k]
+            continue
+
+        # If the layer is decomposed, add it to the decomposed weights list.
+        if k in decomposed_layers:
+            decomposed_weights_curr.append(sd_curr[k])
+            continue
+
+        # If the layer is the classifier, add it to the full dictionary.
+        elif "classifier" in k:
+            full[k] = sd_curr[k]
+            continue
+
+        # Otherwise, add it to the weights list.
+        else: # Extract weights for prev and current layer.
+            weights_curr.append(sd_curr[k])
+        
+    # Generate weight delta.
+    # print("decomposed_layers=", decomposed_layers)
+    # print("full:",full)
+
+    # Flatten the weights and decomposed weights.
+    curr_flatten = np.concatenate([tensor.cpu().detach().numpy().flatten() for tensor in weights_curr])
+    decomposed_curr_flatten = np.concatenate([tensor.cpu().detach().numpy().flatten() for tensor in decomposed_weights_curr])
+
+    # Generate the delta between the current and previous weights.
+    weight_delta = np.subtract(curr_flatten, weights_prev)
+
+    # Generate the delta between the current and previous decomposed weights.
+    decomposed_weight_delta = np.subtract(decomposed_curr_flatten, decomposed_weights_prev)
+
+    return weight_delta, decomposed_weight_delta, full
+
 
 def generate_delta(weights_prev : np.array, decomposed_weights_prev : np.array, sd_curr, decomposed_layers):
     """
