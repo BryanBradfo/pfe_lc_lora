@@ -21,9 +21,15 @@ def restoreLinearLayer(alpha, beta, base, scaling):
 
     @return The converted weights of the original model according to the decomposition.
     """
+    device = base.device  # Get the device of the base tensor
     if scaling == -1:
         scaling = 0.5
-    return torch.add(base, scaling * torch.matmul(alpha, beta))
+    return torch.add(base, scaling * torch.matmul(alpha.to(device), beta.to(device)))
+
+
+    # if scaling == -1:
+    #     scaling = 0.5
+    # return torch.add(base, scaling * torch.matmul(alpha, beta))
 
 def restore_state_dict(decoded_checkpoint, decoded_decomp_checkpoint, lora_bases, bias, base_dict,
                         decomposed_layers, rank = -1, scaling = -1):
