@@ -871,8 +871,7 @@ class MyViTBlock(nn.Module):
         self.mlp = nn.Sequential(
             LowRankLinear(hidden_d, mlp_ratio * hidden_d, weights[24+26*cpt], bias[24+26*cpt], rank = rank),
             nn.GELU(),
-            LowRankLinear(mlp_ratio * hidden_d, hidden_d, weights[25+26*cpt], bias[25+26*cpt], rank = rank)
-        )
+2           )
 
     def forward(self, x):
         out = x + self.mhsa(self.norm1(x))
