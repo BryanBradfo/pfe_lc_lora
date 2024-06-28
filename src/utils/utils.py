@@ -4,27 +4,6 @@ from src.decompression.decompress import restoreLinearLayer
 from src.compression.LowRankLinear import generate_rank
 from src.utils.criterions import LabelSmoothingCrossEntropyLoss
 
-# def evaluate_accuracy_gpu(model, test_ds):
-#     """
-#     @param model : PyTorch model to evaluate accuracy.
-#     @param test_ds : Test dataset.
-
-#     @return model accuracy.
-#     """
-#     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-#     model.eval() # Set to eval state.
-#     t_correct, t_dp = 0, 0
-#     with torch.no_grad():
-#         for i, label in test_ds:
-#             _, opt = torch.max(model(i.to(device)), dim = 1)
-#             t_dp += label.size(0)
-#             t_correct += (opt == label.to(device)).sum().item()
-#     acc = t_correct / t_dp
-#     print("model accuracy: {}".format(acc))
-#     model.train() # Revert to training state.
-#     return acc
-
 def evaluate_accuracy_gpu(model, test_ds, device):
     """
     @param model : PyTorch model to evaluate accuracy.
@@ -34,20 +13,16 @@ def evaluate_accuracy_gpu(model, test_ds, device):
     """
 
     model.eval() # Set to eval state.
-    valid_loss = 0
-    valid_acc = 0
+    t_correct, t_dp = 0, 0
     with torch.no_grad():
         for i, label in test_ds:
-            output = model(i.to(device))
-            loss = LabelSmoothingCrossEntropyLoss(classes=10)(output, label.to(device))
-            valid_loss += loss.item() * i.size(0)
-            valid_acc = torch.eq(output.argmax(-1), label.to(device)).float().mean()
-    
-    valid_loss /= len(test_ds.dataset)
-
-    print("model accuracy: {}".format(valid_acc))
+            _, opt = torch.max(model(i.to(device)), dim = 1)
+            t_dp += label.size(0)
+            t_correct += (opt == label.to(device)).sum().item()
+    acc = t_correct / t_dp
+    print("model accuracy: {}".format(acc))
     model.train() # Revert to training state.
-    return valid_acc, valid_loss
+    return acc
 
 def evaluate_accuracy(model, test_ds):
     """
@@ -56,22 +31,65 @@ def evaluate_accuracy(model, test_ds):
 
     @return model accuracy.
     """
-
     model.eval() # Set to eval state.
-    valid_loss = 0
-    valid_acc = 0
+    t_correct, t_dp = 0, 0
     with torch.no_grad():
         for i, label in test_ds:
-            output = model(i)
-            loss = LabelSmoothingCrossEntropyLoss(classes=10)(output, label)
-            valid_loss += loss.item() * i.size(0)
-            valid_acc = torch.eq(output.argmax(-1), label).float().mean()
-    
-    valid_loss /= len(test_ds.dataset)
-
-    print("model accuracy: {}".format(valid_acc))
+            _, opt = torch.max(model(i), dim = 1)
+            t_dp += label.size(0)
+            t_correct += (opt == label).sum().item()
+    acc = t_correct / t_dp
+    print("model accuracy: {}".format(acc))
     model.train() # Revert to training state.
-    return valid_acc, valid_loss
+    return acc
+
+# def evaluate_accuracy_gpu(model, test_ds, device):
+#     """
+#     @param model : PyTorch model to evaluate accuracy.
+#     @param test_ds : Test dataset.
+
+#     @return model accuracy.
+#     """
+
+#     model.eval() # Set to eval state.
+#     valid_loss = 0
+#     valid_acc = 0
+#     with torch.no_grad():
+#         for i, label in test_ds:
+#             output = model(i.to(device))
+#             loss = LabelSmoothingCrossEntropyLoss(classes=10)(output, label.to(device))
+#             valid_loss += loss.item() * i.size(0)
+#             valid_acc = torch.eq(output.argmax(-1), label.to(device)).float().mean()
+    
+#     valid_loss /= len(test_ds.dataset)
+
+#     print("model accuracy: {}".format(valid_acc))
+#     model.train() # Revert to training state.
+#     return valid_acc, valid_loss
+
+# def evaluate_accuracy(model, test_ds):
+#     """
+#     @param model : PyTorch model to evaluate accuracy.
+#     @param test_ds : Test dataset.
+
+#     @return model accuracy.
+#     """
+
+#     model.eval() # Set to eval state.
+#     valid_loss = 0
+#     valid_acc = 0
+#     with torch.no_grad():
+#         for i, label in test_ds:
+#             output = model(i)
+#             loss = LabelSmoothingCrossEntropyLoss(classes=10)(output, label)
+#             valid_loss += loss.item() * i.size(0)
+#             valid_acc = torch.eq(output.argmax(-1), label).float().mean()
+    
+#     valid_loss /= len(test_ds.dataset)
+
+#     print("model accuracy: {}".format(valid_acc))
+#     model.train() # Revert to training state.
+#     return valid_acc, valid_loss
 
 
 def lazy_restore_gpu(weights, weights_decomp, bias, clean_model, org, decomposed_layers, rank : int = -1, scaling : int = -1):
