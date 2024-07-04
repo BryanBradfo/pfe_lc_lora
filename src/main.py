@@ -5,7 +5,7 @@ from decimal import *
 import torch
 import src.decompression.decompress as decompress
 import src.compression.deltaCompress as compress
-from src.utils.utils import lazy_restore
+from src.utils.utils import lazy_restore, lazy_restore_gpu
 
 def compress_delta(weight_delta, decomposed_delta):
     """
@@ -19,67 +19,106 @@ def compress_delta(weight_delta, decomposed_delta):
     compressed_decomposed_delta, decomp_full_delta = compress.compress_data(decomposed_delta, num_bits = 3)
     return compressed_weight_delta, full_delta, compressed_decomposed_delta, decomp_full_delta
 
-def extract_weights_gpu(initmodel, saveloc, decomposed_layers, restoring = False):
-    """
-    @param initmodel : Initial run of the model.
-    @param saveloc : The save location for the current model training process.
-    @param restoring : If it is currently being used for model restoration, 
-        which does not require another full-save
-    @param decomposed_layers : Names of the decomposed layers.
-    @return The base for all delta calculations.
-    """
+# def extract_weights_gpu(initmodel, saveloc, decomposed_layers, restoring = False):
+#     """
+#     @param initmodel : Initial run of the model.
+#     @param saveloc : The save location for the current model training process.
+#     @param restoring : If it is currently being used for model restoration, 
+#         which does not require another full-save
+#     @param decomposed_layers : Names of the decomposed layers.
+#     @return The base for all delta calculations.
+#     """
 
-    # Extract weights from the model.
+#     # Extract weights from the model.
+#     if not restoring:
+#         wd = initmodel.state_dict()
+
+#     # If we are restoring, this will already be a state dictionary.
+#     else:
+#         wd = initmodel 
+
+#     # Extract weights from the model.
+#     if not restoring:
+#         # Save current model state_dict for restoration of weights.
+
+#         # Create folder if it does not exist.
+#         if not os.path.exists(saveloc):
+#             os.makedirs(saveloc)
+
+#         # Creation of the full path
+#         fp = os.path.join(saveloc, "base_model.pt")
+#         print("saving full base model @ {}".format(fp))
+
+#         # Save the model.
+#         torch.save(wd, fp)
+
+#     # Generate base layer of weights (0-th state) for delta to build on.
+#     decomposed_layers = compress.generate_decomposed_names(decomposed_layers)
+
+#     # Creation of the weights and decomposed weights lists
+#     weights, decomposed_weights = [], []
+
+#     # Iterate through the state dictionary and extract the weights.
+#     for k, v in wd.items():
+
+#         # Skip bias layers.
+#         if "bias" in k:
+#             continue
+#         # If the layer is decomposed, add it to the decomposed weights list.
+#         if k in decomposed_layers:
+#             decomposed_weights.append(v)
+#             continue
+
+#         # If the layer is the classifier, skip it.
+#         elif "classifier" in k:
+#             continue
+
+#         # Otherwise, add it to the weights list.
+#         else:
+#             weights.append(v)
+
+#     # Flatten the weights and decomposed weights.
+#     weights = np.concatenate([tensor.cpu().detach().flatten().numpy() for tensor in weights])
+#     decomposed_weights = np.concatenate([tensor.cpu().detach().flatten().numpy() for tensor in decomposed_weights])
+
+#     return weights, decomposed_weights
+
+def extract_weights_gpu(initmodel, saveloc, decomposed_layers, restoring = False):
     if not restoring:
         wd = initmodel.state_dict()
-
-    # If we are restoring, this will already be a state dictionary.
     else:
         wd = initmodel 
 
-    # Extract weights from the model.
-    if not restoring:
-        # Save current model state_dict for restoration of weights.
+    # if not restoring:
+    #     if not os.path.exists(saveloc):
+    #         os.makedirs(saveloc)
+    #     fp = os.path.join(saveloc, "base_model.pt")
+    #     print("saving full base model @ {}".format(fp))
+    #     torch.save(wd, fp)
 
-        # Create folder if it does not exist.
-        if not os.path.exists(saveloc):
-            os.makedirs(saveloc)
-
-        # Creation of the full path
-        fp = os.path.join(saveloc, "base_model.pt")
-        print("saving full base model @ {}".format(fp))
-
-        # Save the model.
-        torch.save(wd, fp)
-
-    # Generate base layer of weights (0-th state) for delta to build on.
     decomposed_layers = compress.generate_decomposed_names(decomposed_layers)
+    weights, decomposed_weights, lora_bases = [], [], {}
 
-    # Creation of the weights and decomposed weights lists
-    weights, decomposed_weights = [], []
-
-    # Iterate through the state dictionary and extract the weights.
     for k, v in wd.items():
-
-        # Skip bias layers.
         if "bias" in k:
             continue
-        # If the layer is decomposed, add it to the decomposed weights list.
         if k in decomposed_layers:
             decomposed_weights.append(v)
+            base_name = k.split('.')[0]
+            if base_name not in lora_bases:
+                lora_bases[base_name] = []
+            lora_bases[base_name].append(v)
             continue
-
-        # If the layer is the classifier, skip it.
         elif "classifier" in k:
             continue
-
-        # Otherwise, add it to the weights list.
         else:
             weights.append(v)
 
-    # Flatten the weights and decomposed weights.
     weights = np.concatenate([tensor.cpu().detach().flatten().numpy() for tensor in weights])
     decomposed_weights = np.concatenate([tensor.cpu().detach().flatten().numpy() for tensor in decomposed_weights])
+
+    lora_bases_fp = os.path.join(saveloc, "lora_bases.pt")
+    torch.save(lora_bases, lora_bases_fp)
 
     return weights, decomposed_weights
 
@@ -146,6 +185,56 @@ def extract_weights(initmodel, saveloc, decomposed_layers, restoring = False):
     decomposed_weights = np.concatenate([tensor.flatten().numpy() for tensor in decomposed_weights])
 
     return weights, decomposed_weights
+
+
+# def extract_weights(initmodel, saveloc, decomposed_layers, restoring = False):
+#     """
+#     @param initmodel : Initial run of the model.
+#     @param saveloc : The save location for the current model training process.
+#     @param restoring : If it is currently being used for model restoration, 
+#         which does not require another full-save
+#     @param decomposed_layers : Names of the decomposed layers.
+#     @return The base for all delta calculations.
+#     """
+
+#     if not restoring:
+#         wd = initmodel.state_dict()
+#     else:
+#         wd = initmodel 
+
+#     if not restoring:
+#         if not os.path.exists(saveloc):
+#             os.makedirs(saveloc)
+#         fp = os.path.join(saveloc, "base_model.pt")
+#         print("saving full base model @ {}".format(fp))
+#         torch.save(wd, fp)
+
+#     decomposed_layers = compress.generate_decomposed_names(decomposed_layers)
+#     weights, decomposed_weights, lora_bases = [], [], {}
+
+#     for k, v in wd.items():
+#         if "bias" in k:
+#             continue
+#         if k in decomposed_layers:
+#             decomposed_weights.append(v)
+#             base_name = k.split('.')[0]
+#             if base_name not in lora_bases:
+#                 lora_bases[base_name] = []
+#             lora_bases[base_name].append(v)
+#             continue
+#         elif "classifier" in k:
+#             continue
+#         else:
+#             weights.append(v)
+
+#     weights = np.concatenate([tensor.flatten().numpy() for tensor in weights])
+#     decomposed_weights = np.concatenate([tensor.flatten().numpy() for tensor in decomposed_weights])
+
+#     lora_bases_fp = os.path.join(saveloc, "lora_bases.pt")
+#     torch.save(lora_bases, lora_bases_fp)
+
+#     return weights, decomposed_weights
+
 
 def full_snapshot(current_base, decomp_base, bias, 
                   clean_model, rank, org, clean_model_lora_f, saveloc, 
@@ -339,7 +428,7 @@ def load_checkpoint(full_path):
     decompressed_dcomp = decompress.decode_data(decomposed_weights)
     return decompressed_weights, decompressed_dcomp, checkpoint_bias
 
-def restore_checkpoint(model, saveloc_, set_id, id, decomposed_layers, rank = -1, scaling = -1):
+def restore_checkpoint(model, clean_model, saveloc_, set_id, id, decomposed_layers, rank = -1, scaling = -1):
     """
     @param model : The model to load the checkpoint weights into.
     @param saveloc_ : The filepath for the training process to be restored from.
@@ -360,7 +449,7 @@ def restore_checkpoint(model, saveloc_, set_id, id, decomposed_layers, rank = -1
         return model
     
     og_sd = torch.load(fp)
-    org_weight, org_decomposed_weights = extract_weights(og_sd, saveloc, 
+    org_weight, org_decomposed_weights = extract_weights_gpu(og_sd, saveloc, 
                                                          decomposed_layers, restoring = True)
     base = org_weight.copy()
     base_decomposed = org_decomposed_weights.copy()
@@ -380,10 +469,64 @@ def restore_checkpoint(model, saveloc_, set_id, id, decomposed_layers, rank = -1
     lora_fp = os.path.join(saveloc, "lora_bases.pt")
     lora_bases = torch.load(lora_fp)
 
-    new_sd = decompress.restore_state_dict(decoded_checkpoint=base, decoded_decomp_checkpoint=base_decomposed, 
-                                           lora_bases=lora_bases, bias=full_bias, 
-                                           base_dict=model.state_dict(),
-                                           decomposed_layers=decomposed_layers, 
-                                           rank=rank, scaling=scaling)
-    model.load_state_dict(new_sd)
+    # new_sd = decompress.restore_state_dict(decoded_checkpoint=base, decoded_decomp_checkpoint=base_decomposed, 
+    #                                        lora_bases=lora_bases, bias=full_bias, 
+    #                                        base_dict=model.state_dict(),
+    #                                        decomposed_layers=decomposed_layers, 
+    #                                        rank=rank, scaling=scaling)
+    model = lazy_restore_gpu(
+        base, base_decomposed, full_bias, clean_model, model.state_dict(), decomposed_layers, rank, scaling 
+    )
+    #lazy_restore_gpu(base, base_decomp, bias, AlexNet_CIFAR10(), 
+    #                                        original.state_dict(), DECOMPOSED_LAYERS, rank = RANK, scaling = SCALING)
+    # model.load_state_dict(new_sd)
     return model
+
+# def restore_checkpoint(model, saveloc_, set_id, id, decomposed_layers, rank = -1, scaling = -1):
+#     """
+#     @param model : The model to load the checkpoint weights into.
+#     @param saveloc_ : The filepath for the training process to be restored from.
+#     @param set_id : The set id to restore the model from.
+#     @param id : The ID with respect to the current file for 
+#             the training process to be restored from, ID given is treated as inclusive.
+#             Note that valid IDs starts from 1 onwards (0-th ID is the full save).
+#     @param rank : The rank specified within the decomposition process.
+#     @param scaling : The scaling factor used.
+#     @param decomposed_layers : Names of the decomposed layers.
+#     @return model with restored weights included.
+#     """
+#     saveloc = os.path.join(saveloc_, "set_{}".format(set_id))
+#     fp = os.path.join(saveloc, "base_model.pt")
+    
+#     if id == 0: # id 0 == base model.
+#         model.load_state_dict(torch.load(fp))
+#         return model
+    
+#     og_sd = torch.load(fp)
+#     org_weight, org_decomposed_weights = extract_weights_gpu(og_sd, saveloc, 
+#                                                          decomposed_layers, restoring = True)
+#     base = org_weight.copy()
+#     base_decomposed = org_decomposed_weights.copy()
+
+#     # Adding delta back to base.
+#     for i in range(0, id + 1):
+#         fp = os.path.join(saveloc, "lc_checkpoint_{}.pt".format(i))
+#         decompressed_weights, decompressed_dcomp_weights, _ = load_checkpoint(fp)
+#         base = np.add(base, decompressed_weights)
+#         base_decomposed = np.add(base_decomposed, decompressed_dcomp_weights)
+    
+#     # Get full bias of final model.
+#     fp = os.path.join(saveloc, "lc_checkpoint_{}.pt".format(id))
+#     _, _, full_bias = load_checkpoint(fp)
+
+#     # Get the LoRA base of the model.
+#     lora_fp = os.path.join(saveloc, "base_model.pt")
+#     lora_bases = torch.load(lora_fp)
+
+#     new_sd = decompress.restore_state_dict(decoded_checkpoint=base, decoded_decomp_checkpoint=base_decomposed, 
+#                                            lora_bases=lora_bases, bias=full_bias, 
+#                                            base_dict=model.state_dict(),
+#                                            decomposed_layers=decomposed_layers, 
+#                                            rank=rank, scaling=scaling)
+#     model.load_state_dict(new_sd)
+#     return model
