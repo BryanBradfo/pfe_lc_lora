@@ -50,7 +50,7 @@ def restore_state_dict(decoded_checkpoint, decoded_decomp_checkpoint, lora_bases
         if "bias" in layer_name:
             base_dict[layer_name] = bias[layer_name]
             continue
-        dim = init_tensor.numpy().shape
+        dim = init_tensor.cpu().detach().numpy().shape
         if not dim:
             continue
         if layer_name in decomposed_layers: # Restoration procedure for dense layers.
