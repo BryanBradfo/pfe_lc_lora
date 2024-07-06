@@ -122,8 +122,9 @@ def extract_weights_gpu(sd, saveloc, decomposed_layers):
     if not os.path.exists(saveloc):
         os.makedirs(saveloc)
     # fp = os.path.join(saveloc, "/initial_model.pt")
-    print("old_lc | saving full base model @ {}".format(saveloc + "/initial_model.pt"))
-    torch.save(sd, saveloc + "/initial_model.pt")
+    
+    # print("old_lc | saving full base model @ {}".format(saveloc + "/initial_model.pt"))
+    # torch.save(sd, saveloc + "/initial_model.pt")
 
     weights = []
     bias = {}
