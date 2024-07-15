@@ -117,8 +117,8 @@ def extract_weights_gpu(initmodel, saveloc, decomposed_layers, restoring = False
     weights = np.concatenate([tensor.cpu().detach().flatten().numpy() for tensor in weights])
     decomposed_weights = np.concatenate([tensor.cpu().detach().flatten().numpy() for tensor in decomposed_weights])
 
-    lora_bases_fp = os.path.join(saveloc, "lora_bases.pt")
-    torch.save(lora_bases, lora_bases_fp)
+    # lora_bases_fp = os.path.join(saveloc, "lora_bases.pt")
+    # torch.save(lora_bases, lora_bases_fp)
 
     return weights, decomposed_weights
 
