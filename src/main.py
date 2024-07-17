@@ -89,12 +89,12 @@ def extract_weights_gpu(initmodel, saveloc, decomposed_layers, restoring = False
     else:
         wd = initmodel 
 
-    # if not restoring:
-    #     if not os.path.exists(saveloc):
-    #         os.makedirs(saveloc)
-    #     fp = os.path.join(saveloc, "base_model.pt")
-    #     print("saving full base model @ {}".format(fp))
-    #     torch.save(wd, fp)
+    if not restoring:
+        if not os.path.exists(saveloc):
+            os.makedirs(saveloc)
+        fp = os.path.join(saveloc, "base_model.pt")
+        print("saving full base model @ {}".format(fp))
+        torch.save(wd, fp)
 
     decomposed_layers = compress.generate_decomposed_names(decomposed_layers)
     weights, decomposed_weights, lora_bases = [], [], {}
