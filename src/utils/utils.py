@@ -48,6 +48,32 @@ def evaluate_accuracy_vit_gpu(model, test_ds, device):
     model.train()  # Revert to training state.
     return acc
 
+def evaluate_accuracy_distilbert_gpu(model, test_ds, device):
+    """
+    @param model : PyTorch model to evaluate accuracy.
+    @param test_ds : Test dataset.
+
+    @return model accuracy.
+    """
+    acc = lambda x, y: (torch.argmax(x, dim=1) == y).sum().item() / y.size(0)
+    avg_acc = 0
+    model.eval()  # Set to eval state.
+    total_acc = 0
+    with torch.no_grad():
+        for data in test_ds:
+            input_ids = data['input_ids'].to(device)
+            attention_mask = data['attention_mask'].to(device)
+            labels = data['labels'].to(device)
+            opt = model(input_ids=input_ids, attention_mask=attention_mask)
+            # Extract the logits from ImageClassifierOutput
+            logits = opt.logits if hasattr(opt, 'logits') else opt
+            # Assuming logits is the tensor containing model predictions
+            predicted = torch.argmax(logits, dim=1)
+            total_acc += acc(logits, labels)
+    avg_acc = total_acc / len(test_ds)
+    model.train()  # Revert to training state.
+    return avg_acc
+
 def evaluate_accuracy(model, test_ds):
     """
     @param model : PyTorch model to evaluate accuracy.
@@ -88,6 +114,31 @@ def evaluate_accuracy_vit(model, test_ds):
     model.train() # Revert to training state.
     return acc
 
+def evaluate_accuracy_distilbert(model, test_ds):
+    """
+    @param model : PyTorch model to evaluate accuracy.
+    @param test_ds : Test dataset.
+
+    @return model accuracy.
+    """
+    acc = lambda x, y: (torch.argmax(x, dim=1) == y).sum().item() / y.size(0)
+    avg_acc = 0
+    model.eval()  # Set to eval state.
+    total_acc = 0
+    with torch.no_grad():
+        for data in test_ds:
+            input_ids = data['input_ids']
+            attention_mask = data['attention_mask']
+            labels = data['labels']
+            opt = model(input_ids=input_ids, attention_mask=attention_mask)
+            # Extract the logits from ImageClassifierOutput
+            logits = opt.logits if hasattr(opt, 'logits') else opt
+            # Assuming logits is the tensor containing model predictions
+            predicted = torch.argmax(logits, dim=1)
+            total_acc += acc(logits, labels)
+    avg_acc = total_acc / len(test_ds)
+    model.train()  # Revert to training state.
+    return avg_acc
 # def evaluate_accuracy_gpu(model, test_ds, device):
 #     """
 #     @param model : PyTorch model to evaluate accuracy.
