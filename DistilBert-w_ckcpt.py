@@ -43,9 +43,10 @@ def data_loader():
 
     tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
 
+    context_length = 128
     # Tokenize the dataset
     def tokenize_function(examples):
-        return tokenizer(examples['text'], padding='max_length', truncation=True)
+        return tokenizer(examples['text'], padding='max_length', truncation=True, max_length=context_length)
 
     tokenized_datasets = dataset.map(tokenize_function, batched=True)
 
@@ -223,8 +224,8 @@ model = copy.deepcopy(model_hf).to(device)
 replace_linear_with_lowrank(model.distilbert, w, b)
 
 optimizer = AdamW(model.parameters(), lr=learning_rate_dloralc)
-optimizer_lc_only = AdamW(model.parameters(), lr=learning_rate)
-optimizer_no_touch = AdamW(model.parameters(), lr=learning_rate)
+optimizer_lc_only = AdamW(model_original.parameters(), lr=learning_rate)
+optimizer_no_touch = AdamW(model_no_touch.parameters(), lr=learning_rate)
 
 full_accuracy = []
 decomposed_full_accuracy = []
