@@ -211,8 +211,8 @@ DECOMPOSED_LAYERS = [
 RANK = -1
 SCALING = -1
 learning_rate = 5e-5
-learning_rate_dloralc = 5e-4
-NUM_EPOCHES = 1
+learning_rate_dloralc = 5e-5
+NUM_EPOCHES = 4
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 original = DistilBertForSequenceClassification.from_pretrained('distilbert-base-uncased').to(device)
