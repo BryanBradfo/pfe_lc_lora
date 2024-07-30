@@ -1,25 +1,65 @@
-# LC-LoRA
+# On Efficient Constructions of Checkpoints for Deep Neural Networks
+
+## Overview
+This project proposes an ingenious scheme, leveraging the benefits of [delta-LoRA](https://arxiv.org/abs/2309.02411)  (a modified version of [LoRA](https://arxiv.org/abs/2106.09685): Low Rank Adaptation) and [LC-checkpoint](https://arxiv.org/abs/2009.13003), which is a checkpointing scheme. This innovative framework aims to facilitate the training of deep neural networks by creating compressed checkpoints. These checkpoints allow the training process to resume from the last saved state in the event of failures (such as gradient explosion or division by zero), thus saving time and computational resources.
+
+## Motivation
+The code is driven by two main ambitions:
+1. To create a framework that supports the training of deep neural networks with the ability to create compressed checkpoints, enabling the resumption of fine-tuning without starting from scratch in case of failures.
+2. To establish a framework that also prevents data poisoning; thus, if malicious data is detected, training can resume from a model checkpoint that was last trained on clean data.
+
+## Installation Instructions
+For a fresh environment setup, follow these steps:
+- Install the latest version of Python.
+- Install the latest version of Visual Studio Code.
+- Install Python extension, Jupyter Notebook on Visual Studio Code.
+- Install Anaconda.
+- Open a terminal and run the following commands:
+  ```bash
+  conda create --name py310 python=3.10
+  conda activate py310
+  conda install cudatoolkit -c anaconda -y
+  nvidia-smi
+  conda install pytorch-cuda=11.8 -c pytorch -c nvidia -y
+  conda install pytorch torchvision torchaudio -c pytorch -c nvidia -y
+  pip install pandas scipy matplotlib pathos wandb
+- These installation steps are primarily for Windows but can be easily adapted for Linux and macOS by modifying the commands accordingly.
+
+## Usage
+
+Once installed, you can run the scripts inside the project directory to start the training process and utilize the checkpointing mechanisms.
+
+## Additional Resources
+
+- Link to the project report in French
+- Link to the project report in English
+- Access to the PowerPoint presentation in French
+
+## Credits
+This project was built with guidance and support from:
+
+- Assoc Prof [Ooi Wei Tsang](https://www.comp.nus.edu.sg/cs/people/ooiwt/) (NUS)
+- Asst Prof[Axel Carlier](https://ipal.cnrs.fr/axel-carlier-personal-page/) (INP-ENSEEIHT)
+- PhD Student [Yannis Montreuil](https://ipal.cnrs.fr/yannis-montreuil-personal-page/) (UPMC, Sorbonne University)
+- Scientist [Lai Xing Ng](https://ipal.cnrs.fr/lai-xing-ng/) (A*STAR Institute for Infocomm Research)
+
+Special thanks to CNRS@Create for supporting this research project.
+
+
+References: 
+
+1. Yu Chen, Zhenming Liu, Bin Ren & Xin Jin's [On Efficient Construction of Checkpoints.](https://arxiv.org/abs/2009.13003)
+
+2. Shuyu Zhang, Donglei Wu, Haoyu Jin, Xiangyu Zou, Wen Xia & Xiaojia Huang's [QD-Compressor: a Quantization-based Delta Compression Framework for Deep Neural Networks](https://ieeexplore.ieee.org/document/9643728)
+
+3. Amey Agrawal, Sameer Reddy, Satwik Bhattamishra, Venkata Prabhakara Sarath Nookala, Vidushi Vashishth, Kexin Rong & Alexey Tumanov's [DynaQuant: Compressing Deep Learning Training Checkpoints via Dynamic Quantization](https://arxiv.org/abs/2306.11800)
+
+4. Edward J. Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-Zhu, Yuanzhi Li, Shean Wang, Lu Wang & Weizhu Chen's [LoRA: Low-Rank Adaptation of Large Language Models](https://arxiv.org/abs/2106.09685)
+
+6. Bojia Zi, Xianbiao Qi, Lingzhi Wang, Jianan Wang, Kam-Fai Wong, Lei Zhang's [Delta-LoRA: Fine-Tuning High-Rank Parameters with the Delta of Low-Rank Matrices](https://arxiv.org/abs/2309.02411) 
+
+<!-- # LC-LoRA
 
 ### Introduction
 
 Delta-compression framework for diverging branches in model training using Low-Rank Approximation (LoRA) and delta-encoding.
-
-### Credits
-
-Built with guidance and support from Prof. Ooi Wei Tsang (NUS).
-
-Design of the mechanism inspired by the following works:
-
-1. Yu Chen, Zhenming Liu, Bin Ren & Xin Jin's [On Efficient Construction of Checkpoints.](https://arxiv.org/abs/2009.13003)
-
-2. Haoyu Jin, Donglei Wu, Shuyu Zhang, Xiangyu Zou, Sian Jin, Dingwen Tao, Qing Liao and Wen Xia's [Design of a Quantization-Based DNN Delta Compression Framework for Model Snapshot and Federated Learning](https://ieeexplore.ieee.org/document/10018182)
-
-3. Shuyu Zhang, Donglei Wu, Haoyu Jin, Xiangyu Zou, Wen Xia & Xiaojia Huang's [QD-Compressor: a Quantization-based Delta Compression Framework for Deep Neural Networks](https://ieeexplore.ieee.org/document/9643728)
-
-4. Amey Agrawal, Sameer Reddy, Satwik Bhattamishra, Venkata Prabhakara Sarath Nookala, Vidushi Vashishth, Kexin Rong & Alexey Tumanov's [DynaQuant: Compressing Deep Learning Training Checkpoints via Dynamic Quantization](https://arxiv.org/abs/2306.11800)
-
-5. Edward J. Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-Zhu, Yuanzhi Li, Shean Wang, Lu Wang & Weizhu Chen's [LoRA: Low-Rank Adaptation of Large Language Models](https://arxiv.org/abs/2106.09685)
-
-6. Yixiao Li, Yifan Yu, Qingru Zhang, Chen Liang, Pengcheng He, Weizhu Chen & Tuo Zhao's [LoSparse: Structured Compression of Large Language Models based on Low-Rank and Sparse Approximation](https://arxiv.org/abs/2306.11222)
-
-7. Bojia Zi, Xianbiao Qi, Lingzhi Wang, Jianan Wang, Kam-Fai Wong, Lei Zhang's [Delta-LoRA: Fine-Tuning High-Rank Parameters with the Delta of Low-Rank Matrices](https://arxiv.org/abs/2309.02411)
