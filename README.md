@@ -1,14 +1,23 @@
-# On Efficient Constructions of Checkpoints for Deep Neural Networks
+# **On Efficient Constructions of Checkpoints for Deep Neural Networks** 🤖
 
-## Overview
-This project proposes an ingenious scheme, leveraging the benefits of [delta-LoRA](https://arxiv.org/abs/2309.02411)  (a modified version of [LoRA](https://arxiv.org/abs/2106.09685): Low Rank Adaptation) and [LC-checkpoint](https://arxiv.org/abs/2009.13003), which is a checkpointing scheme. This innovative framework aims to facilitate the training of deep neural networks by creating compressed checkpoints. These checkpoints allow the training process to resume from the last saved state in the event of failures (such as gradient explosion or division by zero), thus saving time and computational resources.
+<p align="center">
+  <img src="img/checkpoint.webp" />
+</p>
 
-## Motivation
+## **Overview** ✨
+This project proposes an ingenious scheme, **leveraging the benefits** of [**Delta-LoRA**](https://arxiv.org/abs/2309.02411)  (a modified version of [LoRA](https://arxiv.org/abs/2106.09685): Low Rank Adaptation) and [**LC-checkpoint**](https://arxiv.org/abs/2009.13003), which is a **checkpointing scheme**. This innovative framework aims to facilitate the training of deep neural networks by **creating compressed checkpoints**. These checkpoints allow the training process to **resume from the last saved state** in the event of failures (such as gradient explosion or division by zero), thus **saving time and computational resources**.
+
+## **Motivation** 🏋️
 The code is driven by two main ambitions:
-1. To create a framework that supports the training of deep neural networks with the ability to create compressed checkpoints, enabling the resumption of fine-tuning without starting from scratch in case of failures.
-2. To establish a framework that also prevents data poisoning; thus, if malicious data is detected, training can resume from a model checkpoint that was last trained on clean data.
+1. To create a framework that supports the training of deep neural networks with the ability to **create compressed checkpoints**, enabling the resumption of fine-tuning without starting from scratch in case of failures.
+2. To establish a framework that also **prevents data poisoning**; thus, if malicious data is detected, training can resume from a model checkpoint that was last trained on clean data.
 
-## Installation Instructions
+## **Technologies** 🧑‍💻
+
+* [Python - matplotlib, pandas, seaborn, numpy, zlib](https://www.python.org/)
+* [Pytorch](https://pytorch.org/)
+
+## **Installation Instructions** ⌨️
 For a fresh environment setup, follow these steps:
 - Install the latest version of Python.
 - Install the latest version of Visual Studio Code.
@@ -25,17 +34,25 @@ For a fresh environment setup, follow these steps:
   pip install pandas scipy matplotlib pathos wandb
 - These installation steps are primarily for Windows but can be easily adapted for Linux and macOS by modifying the commands accordingly.
 
-## Usage
+## **Usage** 👋
 
 Once installed, you can run the scripts inside the project directory to start the training process and utilize the checkpointing mechanisms.
 
-## Additional Resources
+## **Additional Resources** 😊
 
 - Link to the project report in French
 - Link to the project report in English
-- Access to the PowerPoint presentation in French
+- Access to the slides presentation in French
 
-## Credits
+## **How to start ?** 🚨
+
+Kindly be aware that the code has been crafted with maximum flexibility in mind. Nevertheless, there's a possibility that you may need to customize it to suit your particular use case and circumstances.
+
+## **Contact** 📩
+
+- bryan [dot] chen [at] etu [dot] toulouse-inp [dot] com
+
+## **Acknowledgments** 🙏
 This project was built with guidance and support from:
 
 - Assoc Prof [Ooi Wei Tsang](https://www.comp.nus.edu.sg/cs/people/ooiwt/) (NUS)
@@ -45,8 +62,9 @@ This project was built with guidance and support from:
 
 Special thanks to CNRS@Create for supporting this research project.
 
+We express our gratitude to all their contributors and maintainers!
 
-References: 
+## **References** 📚 
 
 1. Yu Chen, Zhenming Liu, Bin Ren & Xin Jin's [On Efficient Construction of Checkpoints.](https://arxiv.org/abs/2009.13003)
 
