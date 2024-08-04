@@ -56,7 +56,7 @@ Kindly be aware that the code has been crafted with maximum flexibility in mind.
 This project was built with guidance and support from:
 
 - Assoc Prof [Ooi Wei Tsang](https://www.comp.nus.edu.sg/cs/people/ooiwt/) (NUS)
-- Asst Prof[Axel Carlier](https://ipal.cnrs.fr/axel-carlier-personal-page/) (INP-ENSEEIHT)
+- Asst Prof [Axel Carlier](https://ipal.cnrs.fr/axel-carlier-personal-page/) (INP-ENSEEIHT)
 - PhD Student [Yannis Montreuil](https://ipal.cnrs.fr/yannis-montreuil-personal-page/) (UPMC, Sorbonne University)
 - Scientist [Lai Xing Ng](https://ipal.cnrs.fr/lai-xing-ng/) (A*STAR Institute for Infocomm Research)
 
