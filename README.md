@@ -60,7 +60,7 @@ This project was built with guidance and support from:
 - PhD Student [Yannis Montreuil](https://ipal.cnrs.fr/yannis-montreuil-personal-page/) (UPMC, Sorbonne University)
 - Scientist [Lai Xing Ng](https://ipal.cnrs.fr/lai-xing-ng/) (A*STAR Institute for Infocomm Research)
 
-Special thanks to CNRS@Create for supporting this research project.
+Special thanks to [CNRS@Create](https://www.cnrsatcreate.cnrs.fr/) for supporting this research project.
 
 We express our gratitude to all their contributors and maintainers!
 
