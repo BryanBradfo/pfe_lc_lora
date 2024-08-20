@@ -1,4 +1,5 @@
-pip==23.3
-numpy==1.23.1
-pickleshare==0.7.5
-torch==2.2.0
+# Base Python environment
+python==3.10
+
+# CUDA Toolkit and PyTorch with CUDA 11.8 support
+cudatoolkit==11.8
