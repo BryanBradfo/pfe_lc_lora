@@ -18,6 +18,9 @@ The code is driven by two main ambitions:
 * [Pytorch](https://pytorch.org/)
 
 ## **Installation Instructions** ⌨️
+
+### Option 1: Fresh Environment Setup 😁
+
 For a fresh environment setup, follow these steps:
 - Install the latest version of Python.
 - Install the latest version of Visual Studio Code.
@@ -33,6 +36,19 @@ For a fresh environment setup, follow these steps:
   conda install pytorch torchvision torchaudio -c pytorch -c nvidia -y
   pip install pandas scipy matplotlib pathos wandb
 - These installation steps are primarily for Windows but can be easily adapted for Linux and macOS by modifying the commands accordingly.
+
+### Option 2: Use Predefined Environment ✨
+
+Alternatively, you can use the predefined environment file to set up your environment more quickly:
+
+- Clone the repository from GitHub.
+- Open a terminal in the cloned repository directory.
+- Run the following command:
+  ```bash
+  conda env create -f environment.yml
+  conda activate py310
+  ```
+- This will create a new conda environment named `py310` and install all the necessary packages.
 
 ## **Usage** 👋
 
@@ -50,7 +66,7 @@ Kindly be aware that the code has been crafted with maximum flexibility in mind.
 
 ## **Contact** 📩
 
-- bryan [dot] chen [at] etu [dot] toulouse-inp [dot] com
+- bryan [dot] chen [at] etu [dot] toulouse-inp [dot] com / t0934135 [at] u [dot] nus [dot] edu
 
 ## **Acknowledgments** 🙏
 This project was built with guidance and support from:
