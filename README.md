@@ -56,8 +56,8 @@ Once installed, you can run the scripts inside the project directory to start th
 
 ## **Additional Resources** 😊
 
-- [Link to the project report in French](docs/_EN_PFE-Efficient_checkpointing_for_Deep_Neural_Networks.pdf)
-- Link to the project report in English
+- [Link to the project report in French](docs/_FR_PFE-Efficient_checkpointing_for_Deep_Neural_Networks.pdf)
+- [Link to the project report in English](docs/_EN_PFE-Efficient_checkpointing_for_Deep_Neural_Networks.pdf)
 - Access to the slides presentation in French
 
 ## **How to start ?** 🚨
