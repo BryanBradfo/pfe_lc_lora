@@ -19,6 +19,17 @@ The code is driven by two main ambitions:
 
 ## **Installation Instructions** ⌨️
 
+### Dataset Installation 📦
+
+For training your models, you will need to download and install the datasets. Below are the steps to download the **Stanford Cars Dataset** from Kaggle and set it up in your environment.
+
+#### Stanford Cars Dataset Installation 🚗
+
+**Download the Dataset**:
+  - Visit the Kaggle page for the **Stanford Cars Dataset**: [Stanford Cars Dataset](https://www.kaggle.com/datasets/jessicali9530/stanford-cars-dataset).
+  - Decompress the dataset and name it `data_stanfordcars`.
+
+
 ### Option 1: Fresh Environment Setup 😁
 
 For a fresh environment setup, follow these steps:
@@ -49,6 +60,8 @@ Alternatively, you can use the predefined environment file to set up your enviro
   conda activate py310
   ```
 - This will create a new conda environment named `py310` and install all the necessary packages.
+
+
 
 ## **Usage** 👋
 
